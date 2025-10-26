@@ -1,8 +1,14 @@
-[![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
+<!-- [![Python](https://img.shields.io/badge/python-3.8%2B-blue)](https://www.python.org/downloads/)
 [![TensorFlow](https://img.shields.io/badge/tensorflow-2.10%2B-orange)](https://www.tensorflow.org/)
 [![DOI](https://img.shields.io/badge/DOI-10.1016%2Fj.patcog.2025.112150-blue)](https://ieeexplore.ieee.org/document/10884719#:~:text=10.1109/JSTARS.2025.3541733)
+-->
 
-
+[![Paper](https://img.shields.io/badge/Paper-IEEE%20JSTARS%202025-2b6cb0.svg)](#citation)
+[![DOI](https://img.shields.io/badge/DOI-10.1109%2FJSTARS.2025.3541733-4a5568.svg)](#citation)
+[![Tasks](https://img.shields.io/badge/Tasks-Classification-success.svg)](#-features)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.9%2B-informational.svg)]()
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.14-orange.svg)]()
 
 ## BrownViTNet: Hybrid CNN-Vision Transformer Model for the Classification of Brownfields in Aerial Imagery
 
