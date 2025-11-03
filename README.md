@@ -41,3 +41,162 @@ The identification of brownfield sites through satellite imagery is a crucial ye
 - Comprehensive Evaluation Metrics — Includes ROC–AUC, confusion matrix, precision, recall, and F1-score.
 
 - Environment & Urban Development Relevance — Supports sustainable land monitoring and urban redevelopment assessment.
+
+
+### 🧠 Model Architecture Overview
+
+*Stage 1* – CNN Feature Extractor (MSFE):
+
+- 4 convolutional blocks (Depthwise + Conv2D)
+
+- BatchNorm + GELU activation
+
+- Residual connections (shortcut + addition)
+
+*Stage 2* – Transformer Encoder (HMSACTUnit):
+
+- Patch extraction (Patches layer)
+
+- Linear projection + positional embedding (PatchEncoder)
+
+- 8 Transformer layers with:
+
+- Multi-Head Self-Attention
+
+- Feed-forward MLP (GELU + Dropout)
+
+- Residual + LayerNorm connections
+
+*Stage 3* – Classification Head:
+
+- Flatten → Dense (2048, 1024)
+
+- Dropout regularization
+
+- Output: Dense(3) → softmax (via logits)
+
+
+
+
+## 🧩 Repository Structure
+
+```
+BrownViTNet/
+├── dataset_setup_aug.py      # Dataset loader and augmentation pipeline (JAX + TF-based)
+├── helper_functions.py       # Utility functions (plotting, downloading, helpers)
+├── model.py                  # BrownViTNet hybrid CNN–ViT architecture
+├── train.py                  # Model training loop with warmup + scheduler + callbacks
+├── requirements.txt          # Dependency list
+├── LICENSE                   # MIT License
+└── README.md                 # Project overview (this file)
+```
+
+
+## ⚙️ Training Configuration
+
+This document outlines the hyperparameters, scheduler design, optimizer setup, and callback configuration used for training **BrownViTNet**.
+
+---
+
+### 🧠 Model Overview
+
+- **Model Name:** BrownViTNet  
+- **Architecture:** Hybrid CNN–Vision Transformer  
+- **Input Shape:** (128 × 128 × 3)  
+- **Output Classes:** 3 (Active, Construction, Brownfield)  
+- **Base Framework:** TensorFlow 2.14 (Keras API)  
+- **Mixed Precision:** Enabled (`mixed_float16`)  
+- **GPU Acceleration:** TensorFlow + JAX-based augmentations  
+
+---
+
+### 🔧 Hyperparameters
+
+| Parameter | Value | Description |
+|------------|--------|-------------|
+| `epochs` | **125** | Total number of training epochs |
+| `batch_size` | **8** | Mini-batch size for training |
+| `image_size` | **128 × 128** | Input image resolution |
+| `val_split` | **0.2** | Validation split ratio |
+| `label_smooth` | **0.05** | Label smoothing factor for loss regularization |
+| `class_number` | **3** | Number of output categories |
+| `autotune` | **tf.data.AUTOTUNE** | Prefetching for faster pipeline execution |
+| `num_grad_accumulation` | **8** | Gradient accumulation steps |
+
+---
+
+### 🧩 Learning Rate & Scheduler
+
+| Parameter | Value | Description |
+|------------|--------|-------------|
+| `lr_base` | **0.016** | Base learning rate |
+| `lr_min` | **0.0** | Minimum learning rate floor |
+| `lr_sched` | **cosine_restart** | Type of scheduler used |
+| `lr_decay_epoch` | **2.4** | Epochs before each restart cycle |
+| `lr_warmup_epoch` | **5** | Warmup period for learning rate ramp-up |
+| `lr_decay_factor` | **0.97** | Exponential decay factor (if used) |
+| `scaled_lr` | Computed as `lr_base * (batch_size / 256.0)` | Adaptive LR scaling |
+| `scaled_lr_min` | Computed as `lr_min * (batch_size / 256.0)` | Adaptive LR minimum |
+| `total_steps` | Derived from `epochs × steps_per_epoch` | Used for cosine scheduling |
+
+**Learning Rate Policy:**  
+Warm-up + Cosine Restart Decay, implemented via custom schedule class  
+`WarmupLearningRateSchedule()` (see `train.py`).
+
+---
+
+### ⚙️ Optimizer & Loss Function
+
+| Component | Configuration |
+|------------|---------------|
+| **Optimizer** | Adam (`amsgrad=True`) |
+| **Loss Function** | Categorical Crossentropy (`from_logits=True`, `label_smoothing=0.05`) |
+| **Metrics** | Accuracy, AUC, Precision, Recall, F1, PRC, TP, TN, FP, FN |
+
+---
+
+### ⏱️ Callbacks
+
+| Callback | Description |
+|-----------|-------------|
+| `ModelCheckpoint` | Saves best model based on validation accuracy (`val_accuracy`) |
+| `CSVLogger` | Logs per-epoch metrics into `training_log.csv` |
+| `ReduceLROnPlateau` | Reduces LR when validation accuracy plateaus for 5 epochs |
+
+**Model Save Path:**  
+`CustomModel_3Chnl_mergeWithSuperImage.h5`
+
+---
+
+### 🧮 Dataset Parameters
+
+| Parameter | Value | Description |
+|------------|--------|-------------|
+| **Data Source** | Aerial images (Google Maps, Bing Maps, DOP20) |
+| **Train:Val Split** | 80:20 |
+| **Data Augmentation** | Grayscale, channel shuffle, zoom, rotation |
+| **Augmentation Framework** | Hybrid JAX + TensorFlow Sequential pipeline |
+| **Prefetching** | Enabled (`AUTOTUNE`) for GPU efficiency |
+
+---
+
+### 🧾 Output Files
+
+| File | Description |
+|------|-------------|
+| `CustomModel_3Chnl_mergeWithSuperImage.h5` | Saved best model weights |
+| `training_log.csv` | Training history and validation metrics per epoch |
+| `checkpoint/` (optional) | Stores checkpoint snapshots if configured |
+
+---
+
+### 📈 Expected Training Outcomes
+
+| Metric | Typical Result |
+|---------|----------------|
+| **Training Accuracy** | ~91% |
+| **Validation Accuracy** | ~90.8% |
+| **AUC (Active class)** | 0.97 |
+| **Loss (Final)** | ~0.23 |
+
+---
